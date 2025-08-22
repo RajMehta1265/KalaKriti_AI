@@ -7,11 +7,20 @@ import { Menu, X, Search } from "lucide-react";
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
 
+  const links = [
+    { name: "Home", href: "/" },
+    { name: "Seasonal", href: "/seasonal" },
+    { name: "Fresh Creations", href: "/fresh" },
+    { name: "Design Archive", href: "/archive" },
+    { name: "Store", href: "/store" },
+    { name: "About", href: "/about" },
+  ];
+
   return (
     <nav className="w-full bg-white shadow-md fixed top-0 left-0 z-50">
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-        
-        {/* ✅ SVG Logo */}
+
+        {/* Logo */}
         <div className="flex items-center gap-2">
           <svg
             width="40"
@@ -19,21 +28,14 @@ export default function Navbar() {
             viewBox="0 0 346.612196203725 369.9004891633874"
             className="looka-1j8o68f"
           >
-            {/* keep the rest of your SVG <path> etc. here */}
+            {/* Your SVG paths here */}
           </svg>
           <span className="text-3xl font-bold text-pink-600">KALAKRITI AI</span>
         </div>
 
         {/* Desktop Menu */}
         <ul className="hidden md:flex gap-6 text-gray-700 font-medium">
-          {[
-            { name: "Home", href: "/" },
-            { name: "Seasonal", href: "/seasonal" },
-            { name: "Fresh Creations", href: "/fresh" },
-            { name: "Design Archive", href: "/archive" },
-            { name: "Store", href: "/store" },
-            { name: "About", href: "/about" },
-          ].map((link, index) => (
+          {links.map((link, index) => (
             <li key={index}>
               <Link
                 href={link.href}
@@ -73,6 +75,35 @@ export default function Navbar() {
           {isOpen ? <X size={28} /> : <Menu size={28} />}
         </button>
       </div>
+
+      {/* Mobile Menu */}
+      {isOpen && (
+        <div className="md:hidden bg-white shadow-md w-full px-6 py-4 absolute top-full left-0">
+          <ul className="flex flex-col gap-4 text-gray-700 font-medium">
+            {links.map((link, index) => (
+              <li key={index}>
+                <Link
+                  href={link.href}
+                  onClick={() => setIsOpen(false)} // close menu on click
+                  className="block py-2 hover:text-pink-600 transition-colors duration-200"
+                >
+                  {link.name}
+                </Link>
+              </li>
+            ))}
+            <li className="mt-2">
+              <Link href="/login">
+                <button
+                  className="w-full px-4 py-2 rounded-lg bg-pink-600 text-white hover:bg-pink-700 transition"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Login
+                </button>
+              </Link>
+            </li>
+          </ul>
+        </div>
+      )}
     </nav>
   );
 }

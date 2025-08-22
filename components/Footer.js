@@ -1,5 +1,6 @@
 "use client";
 import { FaInstagram, FaPinterest, FaWhatsapp, FaEnvelope, FaPhone } from "react-icons/fa";
+import Link from "next/link";
 
 export default function Footer() {
   return (
@@ -34,11 +35,21 @@ export default function Footer() {
         <div className="flex-1 min-w-[200px]">
           <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
           <ul className="space-y-2">
-            {["Home", "Seasonal", "Fresh Creations", "Design Archive", "Store", "About"].map((link, idx) => (
+            {[
+              { name: "Home", href: "/" },
+              { name: "Seasonal", href: "/seasonal" },
+              { name: "Fresh Creations", href: "/fresh" },
+              { name: "Design Archive", href: "/archive" },
+              { name: "Store", href: "/store" },
+              { name: "About", href: "/about" },
+            ].map((link, idx) => (
               <li key={idx}>
-                <a href="#" className="text-gray-400 hover:text-[#ff007f] transition-colors">
-                  {link}
-                </a>
+                <Link
+                  href={link.href}
+                  className="text-gray-400 hover:text-[#ff007f] transition-colors"
+                >
+                  {link.name}
+                </Link>
               </li>
             ))}
           </ul>
