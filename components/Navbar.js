@@ -1,109 +1,95 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { Menu, X, Search } from "lucide-react";
+import { useSession, signIn, signOut } from "next-auth/react";
+import { LogIn, LogOut, User, Search } from "lucide-react";
+import { useState } from "react";
+
+const links = [
+  { name: "Home", href: "/" },
+  { name: "Seasonal", href: "/seasonal" },
+  { name: "Fresh Creations", href: "/fresh" },
+  { name: "Design Archive", href: "/archive" },
+  { name: "Store", href: "/store" },
+  { name: "About", href: "/about" },
+];
 
 export default function Navbar() {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const links = [
-    { name: "Home", href: "/" },
-    { name: "Seasonal", href: "/seasonal" },
-    { name: "Fresh Creations", href: "/fresh" },
-    { name: "Design Archive", href: "/archive" },
-    { name: "Store", href: "/store" },
-    { name: "About", href: "/about" },
-  ];
+  const { data: session } = useSession();
+  const [searchOpen, setSearchOpen] = useState(false);
 
   return (
-    <nav className="w-full bg-white shadow-md fixed top-0 left-0 z-50">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-
-        {/* Logo */}
-        <div className="flex items-center gap-2">
-          <svg
-            width="40"
-            height="40"
-            viewBox="0 0 346.612196203725 369.9004891633874"
-            className="looka-1j8o68f"
-          >
-            {/* Your SVG paths here */}
-          </svg>
-          <span className="text-3xl font-bold text-pink-600">KALAKRITI AI</span>
+    <nav className="w-full bg-white shadow-md sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 flex justify-between items-center h-16">
+        {/* Left - Logo */}
+        <div className="text-3xl font-bold text-pink-600">
+          <Link href="/">Kalakriti AI</Link>
         </div>
 
-        {/* Desktop Menu */}
-        <ul className="hidden md:flex gap-6 text-gray-700 font-medium">
-          {links.map((link, index) => (
-            <li key={index}>
-              <Link
-                href={link.href}
-                className="relative hover:text-pink-600 transition-colors duration-200 
-                  after:content-[''] after:absolute after:-bottom-1 after:left-0 
-                  after:w-0 after:h-[2px] after:bg-pink-600 
-                  hover:after:w-full after:transition-all after:duration-300"
-              >
-                {link.name}
-              </Link>
-            </li>
+        {/* Middle - Nav Links */}
+        <div className="hidden md:flex space-x-6">
+          {links.map((link) => (
+            <Link
+              key={link.name}
+              href={link.href}
+              className="text-gray-700 hover:text-pink-600 transition"
+            >
+              {link.name}
+            </Link>
           ))}
-        </ul>
+        </div>
 
-        {/* Search + Login */}
-        <div className="hidden md:flex items-center gap-4">
-          <div className="flex items-center border rounded-lg px-3 py-1 bg-gray-50">
-            <Search size={18} className="text-gray-500" />
-            <input
-              type="text"
-              placeholder="Search earrings, rings..."
-              className="ml-2 bg-transparent outline-none text-sm"
-            />
+        {/* Right - Search + Auth */}
+        <div className="flex items-center space-x-4">
+          {/* Search */}
+          <div className="relative">
+            {searchOpen ? (
+              <input
+                type="text"
+                placeholder="Search..."
+                className="border rounded-full px-3 py-1 outline-none focus:ring-2 focus:ring-pink-400"
+                onBlur={() => setSearchOpen(false)}
+                autoFocus
+              />
+            ) : (
+              <button
+                onClick={() => setSearchOpen(true)}
+                className="p-2 rounded-full hover:bg-gray-100"
+              >
+                <Search className="w-5 h-5 text-gray-700" />
+              </button>
+            )}
           </div>
-          <Link href="/login">
-            <button className="px-4 py-2 rounded-lg bg-pink-600 text-white hover:bg-pink-700 transition">
-              Login
+
+          {/* Auth Section */}
+          {!session ? (
+            <button
+              onClick={() => signIn()}
+              className="p-2 rounded-full bg-pink-500 text-white hover:bg-pink-600 transition"
+              title="Login"
+            >
+              <LogIn className="w-5 h-5" />
             </button>
-          </Link>
-        </div>
+          ) : (
+            <div className="flex items-center space-x-3">
+              {/* User Name + Icon */}
+              <div className="flex items-center space-x-1 text-gray-700">
+                <User className="w-5 h-5 text-pink-600" />
+                <span>{session.user?.name || "User"}</span>
+              </div>
 
-        {/* Mobile Menu Button */}
-        <button
-          className="md:hidden text-gray-700"
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          {isOpen ? <X size={28} /> : <Menu size={28} />}
-        </button>
+              {/* Logout Button */}
+              <button
+                onClick={() => signOut({ callbackUrl: "/" })}
+                className="p-2 rounded-full bg-pink-500 text-white hover:bg-pink-600 transition"
+                title="Logout"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
-
-      {/* Mobile Menu */}
-      {isOpen && (
-        <div className="md:hidden bg-white shadow-md w-full px-6 py-4 absolute top-full left-0">
-          <ul className="flex flex-col gap-4 text-gray-700 font-medium">
-            {links.map((link, index) => (
-              <li key={index}>
-                <Link
-                  href={link.href}
-                  onClick={() => setIsOpen(false)} // close menu on click
-                  className="block py-2 hover:text-pink-600 transition-colors duration-200"
-                >
-                  {link.name}
-                </Link>
-              </li>
-            ))}
-            <li className="mt-2">
-              <Link href="/login">
-                <button
-                  className="w-full px-4 py-2 rounded-lg bg-pink-600 text-white hover:bg-pink-700 transition"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Login
-                </button>
-              </Link>
-            </li>
-          </ul>
-        </div>
-      )}
     </nav>
   );
 }
