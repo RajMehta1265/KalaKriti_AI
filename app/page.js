@@ -85,7 +85,7 @@ export default function HomePage() {
   ];
 
   return (
-    <section className="w-full max-w-[1400px] mx-auto px-4 py-10 pt-28">
+    <section className="w-full max-w-[1400px] mx-auto px-4 py-10 pt-20">
       {/* Hero Banner Swiper */}
       <Swiper
         modules={[Navigation, Pagination, Autoplay]}
