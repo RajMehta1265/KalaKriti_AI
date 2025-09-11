@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { Loader2, Upload, X } from "lucide-react"; // nice icons
 
 export default function SeasonalImageGenerator() {
   const [searchText, setSearchText] = useState("");
@@ -9,6 +10,7 @@ export default function SeasonalImageGenerator() {
   const [messages, setMessages] = useState([]);
   const [savedChats, setSavedChats] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const handleUpload = (e) => {
     if (e.target.files[0]) {
@@ -17,7 +19,10 @@ export default function SeasonalImageGenerator() {
   };
 
   const handleGenerate = () => {
-    if (searchText || uploadedImage) {
+    if (!searchText && !uploadedImage) return;
+    setLoading(true);
+
+    setTimeout(() => {
       const newMessage = {
         id: Date.now(),
         type: "user",
@@ -48,21 +53,28 @@ export default function SeasonalImageGenerator() {
       setSavedChats((prev) => [chatSession, ...prev]);
       setSearchText("");
       setUploadedImage(null);
-    }
+      setLoading(false);
+    }, 1500); // simulate API call
   };
 
   return (
-    <div className="min-h-screen flex bg-white relative">
+    <div className="min-h-screen flex bg-gradient-to-br from-pink-50 to-white relative">
       {/* Sidebar */}
       {sidebarOpen && (
-        <aside className="w-72 bg-pink-50 border-r border-pink-200 p-4 flex flex-col transition-all duration-300">
+        <motion.aside
+          initial={{ x: -300 }}
+          animate={{ x: 0 }}
+          exit={{ x: -300 }}
+          transition={{ duration: 0.3 }}
+          className="w-72 bg-white border-r border-pink-200 p-4 flex flex-col shadow-lg"
+        >
           <div className="flex items-center justify-between mb-4 border-b border-pink-200 pb-2">
             <h2 className="text-xl font-bold text-pink-600">Your Creations</h2>
             <button
               onClick={() => setSidebarOpen(false)}
               className="text-pink-500 hover:text-pink-700"
             >
-              ❌
+              <X />
             </button>
           </div>
           <div className="flex-1 overflow-y-auto space-y-4">
@@ -86,7 +98,7 @@ export default function SeasonalImageGenerator() {
               ))
             )}
           </div>
-        </aside>
+        </motion.aside>
       )}
 
       {/* Sidebar Open Button */}
@@ -145,6 +157,7 @@ export default function SeasonalImageGenerator() {
 
         {/* Input Bar */}
         <div className="sticky bottom-0 bg-white border-t border-pink-200 px-4 py-4 flex flex-col md:flex-row gap-3 items-center">
+          {/* Text Input */}
           <input
             type="text"
             placeholder="Describe a seasonal image... (e.g., Diwali night lights ✨)"
@@ -152,16 +165,26 @@ export default function SeasonalImageGenerator() {
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
           />
-          <input
-            type="file"
-            onChange={handleUpload}
-            className="p-2 rounded-xl border border-pink-300 cursor-pointer text-pink-600"
-          />
+
+          {/* Upload Box */}
+          <label className="flex items-center justify-center w-40 h-12 rounded-2xl border-2 border-dashed border-pink-300 cursor-pointer hover:bg-pink-50 transition relative">
+            <Upload className="w-5 h-5 text-pink-500" />
+            <input type="file" onChange={handleUpload} className="hidden" />
+          </label>
+
+          {/* Generate Button */}
           <button
             onClick={handleGenerate}
-            className="bg-pink-500 text-white px-6 py-3 rounded-2xl hover:bg-pink-600 shadow-md transition transform hover:scale-105"
+            disabled={loading}
+            className="bg-pink-500 text-white px-6 py-3 rounded-2xl hover:bg-pink-600 shadow-md transition transform hover:scale-105 flex items-center gap-2"
           >
-            Generate
+            {loading ? (
+              <>
+                <Loader2 className="animate-spin w-5 h-5" /> Generating...
+              </>
+            ) : (
+              "Generate"
+            )}
           </button>
         </div>
       </div>
