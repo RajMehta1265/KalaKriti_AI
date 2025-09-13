@@ -1,34 +1,83 @@
+// app/api/auth/forgot-password/route.js
 import { NextResponse } from "next/server";
 import crypto from "crypto";
+import clientPromise from "@/lib/mongodb";
 
-// Imagine you have a User model (MongoDB)
-import User from "@/models/User";
-import dbConnect from "@/lib/dbConnect";
+import nodemailer from "nodemailer";
+
+async function createTransporter() {
+  if (process.env.SMTP_HOST && process.env.SMTP_USER) {
+    return nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT || 587),
+      secure: Number(process.env.SMTP_PORT) === 465, // true for 465
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+  }
+
+  // Fallback: Ethereal (dev only)
+  const testAccount = await nodemailer.createTestAccount();
+  return nodemailer.createTransport({
+    host: "smtp.ethereal.email",
+    port: 587,
+    auth: {
+      user: testAccount.user,
+      pass: testAccount.pass,
+    },
+  });
+}
 
 export async function POST(req) {
   try {
     const { email } = await req.json();
-    await dbConnect();
+    if (!email) return NextResponse.json({ error: "Email required" }, { status: 400 });
 
-    const user = await User.findOne({ email });
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB || "kalakriti");
+
+    const user = await db.collection("users").findOne({ email });
     if (!user) {
-      return NextResponse.json({ message: "User not found" }, { status: 404 });
+      // don't reveal whether email exists — return success message
+      return NextResponse.json({ message: "If this email exists, a reset link will be sent." });
     }
 
-    // Generate reset token
+    // generate token
     const token = crypto.randomBytes(32).toString("hex");
-    user.resetToken = token;
-    user.resetTokenExpiry = Date.now() + 3600000; // 1 hour
-    await user.save();
+    const expiry = Date.now() + 1000 * 60 * 60; // 1 hour
 
-    // TODO: send email with Nodemailer
-    // Example reset link:
-    const resetLink = `${process.env.NEXTAUTH_URL}/reset-password?token=${token}`;
+    await db.collection("users").updateOne(
+      { _id: user._id },
+      { $set: { resetToken: token, resetTokenExpiry: expiry } }
+    );
 
-    console.log("RESET LINK:", resetLink);
+    const resetUrl = `${process.env.NEXTAUTH_URL}/reset-password?token=${token}`;
 
-    return NextResponse.json({ message: "Reset link sent to your email" });
+    const transporter = await createTransporter();
+    const html = `
+      <p>Hi ${user.name || ""},</p>
+      <p>You requested a password reset. Click the link below to reset your password:</p>
+      <p><a href="${resetUrl}">Reset password</a></p>
+      <p>This link will expire in 1 hour.</p>
+    `;
+
+    const info = await transporter.sendMail({
+      from: process.env.EMAIL_FROM || "no-reply@kalakriti.ai",
+      to: email,
+      subject: "Kalakriti: Password reset",
+      html,
+    });
+
+    // If using Ethereal, log the preview URL
+    if (!process.env.SMTP_HOST) {
+      console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
+    }
+
+    return NextResponse.json({ message: "If this email exists, a reset link will be sent." });
   } catch (err) {
-    return NextResponse.json({ message: "Error occurred" }, { status: 500 });
+    console.error("FORGOT PW ERR", err);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

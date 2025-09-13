@@ -1,31 +1,42 @@
-import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
-import User from "@/models/User";
-import dbConnect from "@/lib/dbConnect";
+"use client";
 
-export async function POST(req) {
-  try {
-    const { token, password } = await req.json();
-    await dbConnect();
+import { useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 
-    const user = await User.findOne({
-      resetToken: token,
-      resetTokenExpiry: { $gt: Date.now() },
+export default function ResetPasswordPage() {
+  const [password, setPassword] = useState("");
+  const [msg, setMsg] = useState("");
+  const search = useSearchParams();
+  const token = search.get("token");
+  const router = useRouter();
+
+  const handle = async (e) => {
+    e.preventDefault();
+    setMsg("");
+    const res = await fetch("/api/auth/reset-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, password }),
     });
-
-    if (!user) {
-      return NextResponse.json({ message: "Invalid or expired token" }, { status: 400 });
+    const data = await res.json();
+    if (!res.ok) {
+      setMsg(data.error || "Failed");
+      return;
     }
+    setMsg("Password reset. Redirecting to login...");
+    setTimeout(()=> router.push("/login"), 1400);
+  };
 
-    // Hash new password
-    const hashed = await bcrypt.hash(password, 10);
-    user.password = hashed;
-    user.resetToken = undefined;
-    user.resetTokenExpiry = undefined;
-    await user.save();
-
-    return NextResponse.json({ message: "Password reset successful" });
-  } catch (err) {
-    return NextResponse.json({ message: "Error resetting password" }, { status: 500 });
-  }
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-pink-100 to-white px-4">
+      <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-2xl">
+        <h2 className="text-2xl font-bold text-pink-600 text-center">Reset Password</h2>
+        <form onSubmit={handle} className="mt-6 space-y-4">
+          <input value={password} onChange={(e)=>setPassword(e.target.value)} type="password" placeholder="New password" className="w-full px-4 py-3 border rounded-lg" required />
+          <button className="w-full bg-pink-600 text-white py-3 rounded-lg">Set new password</button>
+        </form>
+        {msg && <p className="mt-4 text-center text-sm">{msg}</p>}
+      </div>
+    </div>
+  );
 }

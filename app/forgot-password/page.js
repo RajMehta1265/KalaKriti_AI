@@ -4,46 +4,32 @@ import { useState } from "react";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
+  const [msg, setMsg] = useState("");
 
-  const handleSubmit = async (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-
-    // Here you'd normally call your backend API to send a reset email
-    // For now we'll just simulate it:
-    setMessage(
-      "If this email is registered, you will receive a password reset link shortly."
-    );
+    setMsg("");
+    const res = await fetch("/api/auth/forgot-password", {
+      method: "POST",
+      headers: { "Content-Type":"application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json();
+    setMsg(data.message || data.error || "If this email exists, a reset link was sent.");
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
-      <div className="w-full max-w-md bg-white shadow-lg rounded-2xl p-8">
-        <h2 className="text-2xl font-bold text-center text-pink-600">
-          Forgot Password
-        </h2>
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-pink-100 to-white px-4">
+      <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-2xl">
+        <h2 className="text-2xl font-bold text-pink-600 text-center">Forgot Password</h2>
+        <p className="text-center text-gray-500 mt-2">Enter your email and we will send a reset link.</p>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          <input
-            type="email"
-            placeholder="Enter your registered email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-pink-500"
-            required
-          />
-
-          <button
-            type="submit"
-            className="w-full bg-pink-600 text-white py-2 rounded-lg hover:bg-pink-700"
-          >
-            Send Reset Link
-          </button>
+        <form onSubmit={submit} className="mt-6 space-y-4">
+          <input value={email} onChange={(e)=>setEmail(e.target.value)} type="email" placeholder="Your email" className="w-full px-4 py-3 border rounded-lg" required />
+          <button className="w-full bg-pink-600 text-white py-3 rounded-lg">Send reset link</button>
         </form>
 
-        {message && (
-          <p className="mt-4 text-sm text-center text-green-600">{message}</p>
-        )}
+        {msg && <p className="mt-4 text-center text-sm text-gray-700">{msg}</p>}
       </div>
     </div>
   );
